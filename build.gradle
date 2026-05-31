@@ -48,6 +48,8 @@ dependencies {
     implementation 'com.example:Vahak-EntityService:0.0.5'
     // Source: https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-netflix-eureka-client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+    implementation 'org.springframework.kafka:spring-kafka:4.0.4'
 }
 
 tasks.named('test') {

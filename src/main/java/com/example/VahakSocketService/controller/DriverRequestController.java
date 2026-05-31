@@ -4,6 +4,7 @@ import com.example.VahakSocketService.dto.RideRequestDto;
 import com.example.VahakSocketService.dto.RideResponseDto;
 import com.example.VahakSocketService.dto.UpdateBookingDto;
 import com.example.VahakSocketService.dto.UpdateBookingResponseDto;
+import com.example.VahakSocketService.producers.KafkaProducerService;
 import com.example.vahakentityservice.models.BookingStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +24,12 @@ public class DriverRequestController {
 
     public final RestTemplate restTemplate;
 
-    public DriverRequestController(SimpMessagingTemplate simpMessagingTemplate, RestTemplate restTemplate){
+    public KafkaProducerService kafkaProducerService;
+
+    public DriverRequestController(SimpMessagingTemplate simpMessagingTemplate, RestTemplate restTemplate, KafkaProducerService kafkaProducerService){
         this.simpMessagingTemplate = simpMessagingTemplate;
         this.restTemplate = restTemplate;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
     @PostMapping("/newRide")
@@ -52,5 +56,11 @@ public class DriverRequestController {
         System.out.println(requsetDto.getDriverId()+" "+requsetDto.getBookingStatus());
 
         ResponseEntity<UpdateBookingResponseDto> result = this.restTemplate.postForEntity("http://localhost:7008/api/v1/booking/"+rideResponseDto.bookingId, requsetDto, UpdateBookingResponseDto.class);
+    }
+
+    @GetMapping
+    public Boolean help(){
+        kafkaProducerService.publishMessage("sample-topic", "Hello");
+        return true;
     }
 }
