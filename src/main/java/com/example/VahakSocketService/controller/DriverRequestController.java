@@ -48,6 +48,7 @@ public class DriverRequestController {
         System.out.println(rideResponseDto.getResponse() + " " + userId);
 
         UpdateBookingDto requsetDto = UpdateBookingDto.builder()
+                .bookingId(rideResponseDto.bookingId)
                 .driverId(Optional.of(Long.parseLong(userId)))
                 .bookingStatus(BookingStatus.SCHEDULED)
                 .build();
@@ -55,12 +56,13 @@ public class DriverRequestController {
         System.out.println("http://localhost:8008/api/v1/booking/"+rideResponseDto.bookingId);
         System.out.println(requsetDto.getDriverId()+" "+requsetDto.getBookingStatus());
 
-        ResponseEntity<UpdateBookingResponseDto> result = this.restTemplate.postForEntity("http://localhost:7008/api/v1/booking/"+rideResponseDto.bookingId, requsetDto, UpdateBookingResponseDto.class);
+        // ResponseEntity<UpdateBookingResponseDto> result = this.restTemplate.postForEntity("http://localhost:7008/api/v1/booking/"+rideResponseDto.bookingId, requsetDto, UpdateBookingResponseDto.class);
+        kafkaProducerService.publishMessage("sample-topic-1", requsetDto);
     }
 
     @GetMapping
     public Boolean help(){
-        kafkaProducerService.publishMessage("sample-topic", "Hello");
+        kafkaProducerService.publishMessage("sample-topic-1", new UpdateBookingDto());
         return true;
     }
 }
