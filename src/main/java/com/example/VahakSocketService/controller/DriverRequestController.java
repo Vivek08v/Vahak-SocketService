@@ -34,27 +34,42 @@ public class DriverRequestController {
 
     @PostMapping("/newRide")
     public ResponseEntity<Boolean> raiseRideRequest(@RequestBody RideRequestDto rideRequestDto){
+        System.out.println(rideRequestDto.getBookingId() +" "+ rideRequestDto.getPassengerId());
         sendDriverNewRideRequest(rideRequestDto);
         return new ResponseEntity<>(Boolean.TRUE, HttpStatus.OK);
     }
 
     public void sendDriverNewRideRequest(RideRequestDto rideRequestDto){
         // TODO: request should only go to nearby drivers not everyone
-        simpMessagingTemplate.convertAndSend("/topic/rideRequest", rideRequestDto);
+        // use rideRequestDto.driverIds to get all the nearby driverIds
+        if(rideRequestDto.getDriverIds()==null){
+            System.out.println("No driver Available");
+            return;
+        }
+
+        System.out.println("Ride request is being sent to the following drivers: ");
+        for(Long driverId: rideRequestDto.getDriverIds()){
+            RideRequestDto payload = rideRequestDto;
+//            String payload = "Hello driver, this is a new ride request";
+            System.out.println("<<< "+driverId);
+            simpMessagingTemplate.convertAndSend("/topic/driver/"+driverId, payload);
+        }
+        // simpMessagingTemplate.convertAndSend("/topic/rideRequest", rideRequestDto);
     }
 
     @MessageMapping("/rideResponse/{userId}")
     public void rideResponseHandler(@DestinationVariable String userId, RideResponseDto rideResponseDto){
-        System.out.println(rideResponseDto.getResponse() + " " + userId);
+        System.out.println("RESPONSE >>> " + rideResponseDto.getResponse() + " from driver Id: " + userId);
 
         UpdateBookingDto requsetDto = UpdateBookingDto.builder()
                 .bookingId(rideResponseDto.bookingId)
                 .driverId(Optional.of(Long.parseLong(userId)))
+                .didAccept(rideResponseDto.getResponse())
                 .bookingStatus(BookingStatus.SCHEDULED)
                 .build();
 
-        System.out.println("http://localhost:8008/api/v1/booking/"+rideResponseDto.bookingId);
-        System.out.println(requsetDto.getDriverId()+" "+requsetDto.getBookingStatus());
+//        System.out.println("http://localhost:8008/api/v1/booking/"+rideResponseDto.bookingId);
+//        System.out.println(requsetDto.getDriverId()+" "+requsetDto.getBookingStatus());
 
         // ResponseEntity<UpdateBookingResponseDto> result = this.restTemplate.postForEntity("http://localhost:7008/api/v1/booking/"+rideResponseDto.bookingId, requsetDto, UpdateBookingResponseDto.class);
         kafkaProducerService.publishMessage("sample-topic-1", requsetDto);

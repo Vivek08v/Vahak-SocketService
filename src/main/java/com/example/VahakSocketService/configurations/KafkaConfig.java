@@ -1,6 +1,8 @@
 package com.example.VahakSocketService.configurations;
 
+import com.example.VahakSocketService.dto.LateAcceptingDriverDto;
 import com.example.VahakSocketService.dto.UpdateBookingDto;
+import com.example.VahakSocketService.dto.WinnerDriverDto;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -49,21 +51,44 @@ public class KafkaConfig {
         return new KafkaTemplate<>(producerFactory());
     }
 
+
     @Bean
-    public ConsumerFactory<String, String> consumerFactory(){
+    public ConsumerFactory<String, WinnerDriverDto> consumerFactoryForWinners(){
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "sample-group");
-        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        return new DefaultKafkaConsumerFactory<>(configProps);
+
+        JacksonJsonDeserializer<WinnerDriverDto> deserializer = new JacksonJsonDeserializer<>(WinnerDriverDto.class);
+        deserializer.setUseTypeHeaders(false);
+        deserializer.addTrustedPackages("*");
+
+        return new DefaultKafkaConsumerFactory<>(configProps, new StringDeserializer(), deserializer);
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory(){
-        ConcurrentKafkaListenerContainerFactory<String, String> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerFactory());
+    public ConcurrentKafkaListenerContainerFactory<String, WinnerDriverDto> kafkaListenerContainerFactory1(){
+        ConcurrentKafkaListenerContainerFactory<String, WinnerDriverDto> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactoryForWinners());
+        return factory;
+    }
+
+    @Bean
+    public ConsumerFactory<String, LateAcceptingDriverDto> consumerFactoryForLateDrivers(){
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "sample-group");
+
+        JacksonJsonDeserializer<LateAcceptingDriverDto> deserializer = new JacksonJsonDeserializer<>(LateAcceptingDriverDto.class);
+        deserializer.setUseTypeHeaders(false);
+        deserializer.addTrustedPackages("*");
+
+        return new DefaultKafkaConsumerFactory<>(configProps, new StringDeserializer(), deserializer);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, LateAcceptingDriverDto> kafkaListenerContainerFactory2(){
+        ConcurrentKafkaListenerContainerFactory<String, LateAcceptingDriverDto> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactoryForLateDrivers());
         return factory;
     }
 }

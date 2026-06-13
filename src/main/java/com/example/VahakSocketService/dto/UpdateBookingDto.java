@@ -16,6 +16,7 @@ public class UpdateBookingDto {
 
     private BookingStatus bookingStatus;
 
+    private Boolean didAccept;
 
     private Optional<Long> driverId;
 }
